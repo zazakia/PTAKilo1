@@ -1,19 +1,68 @@
 import { createClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
+import { appConfig } from './config';
+import type { Database } from '@/types/database';
 
-// Get environment variables with fallbacks
+// Connection retry configuration
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  retryDelay: 1000,
+  backoffMultiplier: 2,
+};
+
+// Enhanced error handling for Supabase operations
+class SupabaseError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'SupabaseError';
+  }
+}
+
+// Retry wrapper for database operations
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  retries = RETRY_CONFIG.maxRetries
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (retries > 0 && isRetryableError(error)) {
+      const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, RETRY_CONFIG.maxRetries - retries);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return withRetry(operation, retries - 1);
+    }
+    throw error;
+  }
+}
+
+function isRetryableError(error: any): boolean {
+  // Network errors, timeouts, and temporary server errors
+  return (
+    error?.code === 'NETWORK_ERROR' ||
+    error?.code === 'TIMEOUT' ||
+    error?.status >= 500 ||
+    error?.message?.includes('network') ||
+    error?.message?.includes('timeout')
+  );
+}
+
+// Get environment variables with validation
 const getSupabaseUrl = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = appConfig.supabase.url;
   if (!url) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
+    throw new SupabaseError('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
   }
   return url;
 };
 
 const getSupabaseAnonKey = () => {
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = appConfig.supabase.anonKey;
   if (!key) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
+    throw new SupabaseError('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable');
   }
   return key;
 };
@@ -21,22 +70,26 @@ const getSupabaseAnonKey = () => {
 const getSupabaseServiceKey = () => {
   // Only available on server side
   if (typeof window !== 'undefined') {
-    throw new Error('Service role key should not be accessed on client side');
+    throw new SupabaseError('Service role key should not be accessed on client side');
   }
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = appConfig.supabase.serviceRoleKey;
   if (!key) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+    throw new SupabaseError('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
   }
   return key;
 };
 
-// Client-side Supabase client
-export const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey());
+// Client-side Supabase client with proper typing
+export const supabase = createClient<Database>(getSupabaseUrl(), getSupabaseAnonKey(), {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 // Server-side Supabase client with service role (for admin operations)
-// This should only be used in server-side code (API routes, server components)
 export const createSupabaseAdmin = () => {
-  return createClient(getSupabaseUrl(), getSupabaseServiceKey(), {
+  return createClient<Database>(getSupabaseUrl(), getSupabaseServiceKey(), {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -44,14 +97,24 @@ export const createSupabaseAdmin = () => {
   });
 };
 
-
-// Browser client for client components
+// Browser client for client components with proper typing
 export const createSupabaseBrowserClient = () =>
-  createBrowserClient(getSupabaseUrl(), getSupabaseAnonKey());
+  createBrowserClient<Database>(getSupabaseUrl(), getSupabaseAnonKey());
 
 // Browser client for client components (alternative name for compatibility)
 export const createBrowserSupabaseClient = () =>
-  createBrowserClient(getSupabaseUrl(), getSupabaseAnonKey());
+  createBrowserClient<Database>(getSupabaseUrl(), getSupabaseAnonKey());
+
+// Connection health check
+export async function checkSupabaseConnection(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.from('ptaVOID_users').select('id').limit(1);
+    return !error;
+  } catch (error) {
+    console.error('Supabase connection check failed:', error);
+    return false;
+  }
+}
 
 // Database helper functions
 export class DatabaseService {

@@ -198,3 +198,101 @@ export const VIEW_NAMES = {
   PAYMENT_STATUS_SUMMARY: 'ptaVOID_payment_status_summary',
   FINANCIAL_SUMMARY: 'ptaVOID_financial_summary',
 } as const;
+
+// Supabase Database type definition
+export interface Database {
+  public: {
+    Tables: {
+      ptaVOID_users: {
+        Row: User;
+        Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_grades: {
+        Row: Grade;
+        Insert: Omit<Grade, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Grade, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_teachers: {
+        Row: Teacher;
+        Insert: Omit<Teacher, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Teacher, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_sections: {
+        Row: Section;
+        Insert: Omit<Section, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Section, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_parents: {
+        Row: Parent;
+        Insert: Omit<Parent, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Parent, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_students: {
+        Row: Student;
+        Insert: Omit<Student, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Student, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_income_categories: {
+        Row: IncomeCategory;
+        Insert: Omit<IncomeCategory, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<IncomeCategory, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_expense_categories: {
+        Row: ExpenseCategory;
+        Insert: Omit<ExpenseCategory, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<ExpenseCategory, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_income_transactions: {
+        Row: IncomeTransaction;
+        Insert: Omit<IncomeTransaction, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<IncomeTransaction, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_expense_transactions: {
+        Row: ExpenseTransaction;
+        Insert: Omit<ExpenseTransaction, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<ExpenseTransaction, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      ptaVOID_receipts: {
+        Row: Receipt;
+        Insert: Omit<Receipt, 'id' | 'created_at'>;
+        Update: Partial<Omit<Receipt, 'id' | 'created_at'>>;
+      };
+      ptaVOID_audit_logs: {
+        Row: AuditLog;
+        Insert: Omit<AuditLog, 'id' | 'created_at'>;
+        Update: Partial<Omit<AuditLog, 'id' | 'created_at'>>;
+      };
+    };
+    Views: {
+      ptaVOID_payment_status_summary: {
+        Row: {
+          grade_name: string;
+          section_name: string;
+          total_students: number;
+          paid_students: number;
+          unpaid_students: number;
+          payment_percentage: number;
+        };
+      };
+      ptaVOID_financial_summary: {
+        Row: {
+          school_year: string;
+          transaction_type: 'Income' | 'Expense';
+          category_name: string;
+          transaction_count: number;
+          total_amount: number;
+        };
+      };
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      user_role: 'admin' | 'principal' | 'teacher' | 'treasurer' | 'parent';
+      payment_method: 'Cash' | 'Check' | 'Bank Transfer' | 'GCash' | 'PayMaya';
+      gender: 'Male' | 'Female';
+      audit_action: 'INSERT' | 'UPDATE' | 'DELETE';
+    };
+  };
+}

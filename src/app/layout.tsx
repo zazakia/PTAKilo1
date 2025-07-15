@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: 'Vel PTA Management System',
@@ -22,9 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="h-full">
-        <div id="root" className="h-full">
-          {children}
-        </div>
+        <ErrorBoundary>
+          <div id="root" className="h-full">
+            {children}
+          </div>
+        </ErrorBoundary>
         <div id="modal-root" />
         <div id="toast-root" />
       </body>
