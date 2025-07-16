@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getCurrentUser } from '@/lib/supabase';
+import { api, handleApiError } from '@/lib/api';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import {
   CurrencyDollarIcon,
@@ -36,50 +37,39 @@ export default function DashboardPage() {
     recentTransactions: [],
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
+        // Get current user
         const currentUser = await getCurrentUser();
         setUser(currentUser);
 
-        // Mock data for now - will be replaced with actual API calls
-        setStats({
-          totalIncome: 125000,
-          totalExpenses: 45000,
-          totalStudents: 500,
-          totalParents: 350,
-          ptaPaidStudents: 425,
-          ptaUnpaidStudents: 75,
-          recentTransactions: [
-            {
-              id: '1',
-              type: 'income',
-              description: 'PTA Contribution - Juan Dela Cruz',
-              amount: 250,
-              date: '2024-01-15',
-              status: 'completed',
-            },
-            {
-              id: '2',
-              type: 'expense',
-              description: 'Security Guard Payment',
-              amount: 5000,
-              date: '2024-01-14',
-              status: 'completed',
-            },
-            {
-              id: '3',
-              type: 'income',
-              description: 'SPG Fee - Maria Santos',
-              amount: 50,
-              date: '2024-01-14',
-              status: 'pending',
-            },
-          ],
-        });
+        // Load dashboard stats
+        const statsResponse = await api.dashboard.getStats();
+        if (!statsResponse.success) {
+          throw new Error(statsResponse.error || 'Failed to load dashboard stats');
+        }
+
+        if (statsResponse.data) {
+          setStats({
+            totalIncome: statsResponse.data.totalIncome || 0,
+            totalExpenses: statsResponse.data.totalExpenses || 0,
+            totalStudents: statsResponse.data.totalStudents || 0,
+            totalParents: statsResponse.data.totalParents || 0,
+            ptaPaidStudents: statsResponse.data.ptaPaidStudents || 0,
+            ptaUnpaidStudents: statsResponse.data.ptaUnpaidStudents || 0,
+            recentTransactions: statsResponse.data.recentTransactions || [],
+          });
+        }
+
       } catch (error) {
         console.error('Error loading dashboard data:', error);
+        setError(handleApiError(error, 'Dashboard'));
       } finally {
         setLoading(false);
       }
@@ -177,6 +167,26 @@ export default function DashboardPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <XCircleIcon className="h-8 w-8 text-red-500 mr-3" />
+            <h2 className="text-lg font-semibold text-gray-900">Dashboard Error</h2>
+          </div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

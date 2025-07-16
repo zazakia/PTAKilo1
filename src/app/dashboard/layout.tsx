@@ -31,6 +31,7 @@ const navigation: NavigationItem[] = [
   { name: 'Income', href: '/dashboard/income', icon: CurrencyDollarIcon, roles: ['admin', 'treasurer', 'principal'] },
   { name: 'Expenses', href: '/dashboard/expenses', icon: BanknotesIcon, roles: ['admin', 'treasurer', 'principal'] },
   { name: 'Students', href: '/dashboard/students', icon: AcademicCapIcon, roles: ['admin', 'teacher', 'treasurer'] },
+  { name: 'Teachers', href: '/dashboard/teachers', icon: UsersIcon, roles: ['admin', 'principal'] },
   { name: 'Parents', href: '/dashboard/parents', icon: UsersIcon, roles: ['admin', 'treasurer'] },
   { name: 'Reports', href: '/dashboard/reports', icon: ChartBarIcon, roles: ['admin', 'principal', 'teacher', 'treasurer'] },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon, roles: ['admin'] },

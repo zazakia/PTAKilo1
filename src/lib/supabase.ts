@@ -108,7 +108,7 @@ export const createBrowserSupabaseClient = () =>
 // Connection health check
 export async function checkSupabaseConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.from('ptaVOID_users').select('id').limit(1);
+    const { data, error } = await supabase.from('ptavoid_users').select('id').limit(1);
     return !error;
   } catch (error) {
     console.error('Supabase connection check failed:', error);
